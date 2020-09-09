@@ -10,6 +10,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace Lab1_Cash
 {
+  
     public class Startup
     {
         // This method gets called by the runtime. Use this method to add services to the container.
@@ -19,8 +20,13 @@ namespace Lab1_Cash
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
+
+        
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+
+
+            int cash = 100000;
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -36,46 +42,58 @@ namespace Lab1_Cash
                 });
             });
 
-            app.Map("/login", Index);
-            app.Map("/cash", Cash);
+            app.Map("/login", Login);
+            app.Map("/options", Options);
 
+
+            void Options(IApplicationBuilder app)
+            {
+                app.Run(async context =>
+                {
+                    if (context.Request.Query.ContainsKey("option")) {
+                        if (context.Request.Query["option"] == "1")
+                        {
+                            await context.Response.WriteAsync($" Your cash: {cash}");
+                        }
+                        else if (context.Request.Query["option"] == "2")
+                        {
+                            int insertedCash = Int32.Parse(context.Request.Query["cash"]);
+                            cash += insertedCash;
+                            await context.Response.WriteAsync($" The transaction was successful: You entered - {insertedCash}" +
+                                $"\n Now on your account(cash): {cash}");
+                        }
+                        else if (context.Request.Query["option"] == "3")
+                        {
+                            int withdrawnCash = Int32.Parse(context.Request.Query["cash"]);
+                            cash -= withdrawnCash;
+                            await context.Response.WriteAsync($" The transaction was successful: You have withdrawn - {withdrawnCash}" +
+                                $"\n Now on your account(cash): {cash}");
+                        }
+                    }
+                });
+            }
 
         }
 
-        private static void Index(IApplicationBuilder app)
+         
+        private void Login(IApplicationBuilder app)
         {
             app.Run(async context =>
             {
                 if (context.Request.Query.ContainsKey("pin") && context.Request.Query["pin"] == "1234")
                 {
-                    await context.Response.WriteAsync("you are logged in! " +
-                        "\n to see cash - after host enter /cash/option=1" +
-                        "\n to task cash - after host enter /cash/option=2" +
-                        "\n to insert cash - after host enter /cash/option=3");
+                    await context.Response.WriteAsync(" You are logged in! \n" +
+                        "\n To see cash - after host enter /options?option=1" +
+                        "\n To enter cash - after host enter /options?option=2&cash=****" +
+                        "\n To take cash - after host enter /options?option=3&cash=****");
                 }
                 else
                 {
-                    await context.Response.WriteAsync("invalid pin! try again");
+                    await context.Response.WriteAsync("Invalid pin! try again");
                 }
             });
         }
 
-        private static void Cash(IApplicationBuilder app)
-        {
-            app.Run(async context =>
-            {
-                if (context.Request.Query.ContainsKey("pin") && context.Request.Query["pin"] == "1234")
-                {
-                    await context.Response.WriteAsync("you are logged in! " +
-                        "\n to see cash - after host enter /cash/option=1" +
-                        "\n to task cash - after host enter /cash/option=2" +
-                        "\n to insert cash - after host enter /cash/option=3");
-                }
-                else
-                {
-                    await context.Response.WriteAsync("invalid pin! try again");
-                }
-            });
-        }
+        
     }
 }
